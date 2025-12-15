@@ -86,12 +86,6 @@ MQTT broker: `mqtt.zeltasoft.com:8883` (TLS)
 
 ## License
 
-MIT — see [LICENSE](../LICENSE).
+MIT — see [LICENSE](LICENSE).
 
-Platform, dashboard, and management SDK are proprietary. Contact sales@zeltasoft.com for licensing.
-
-## Support
-
-- **Docs**: https://docs.zeltasoft.com
-- **Issues**: https://github.com/afmecofe/zelta/issues
-- **Email**: support@zeltasoft.com
+The Zelta cloud platform, web dashboard, and management SDK are proprietary software.
