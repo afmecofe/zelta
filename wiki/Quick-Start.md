@@ -18,7 +18,7 @@ Get your first device connected to Zelta in 15 minutes. **Choose your platform**
 
 ### 1. Create Account & Get Credentials
 
-1. Sign up at https://app.zeltasoft.com
+1. Sign up at https://zeltasoft.com
 2. Create an organization
 3. Add a device → Copy **API key** and **device ID**
 
@@ -71,7 +71,7 @@ journalctl -u zelta-agent -f
 # [INFO] Device online: device-abc123
 ```
 
-✅ **Done!** Check your dashboard at https://app.zeltasoft.com
+✅ **Done!** Check your dashboard at https://zeltasoft.com
 
 ---
 
