@@ -1,71 +1,134 @@
 # Zelta Embedded SDK
 
-Open-source embedded firmware SDK for the Zelta IoT device management platform. This SDK enables IoT devices to securely connect, communicate, and receive over-the-air updates from the Zelta cloud platform.
+Open-source embedded firmware SDK for the Zelta IoT device management platform. This SDK is **platform-agnostic** and works with any embedded system that can communicate via MQTT or HTTPS.
 
-> **Note:** This is the open-source component of Zelta. The cloud platform, web dashboard, and management SDK are closed-source commercial products.
+> **Note:** This is the open-source component of Zelta. The cloud platform, web dashboard, and management tools are closed-source commercial products.
 
 ## Overview
 
-Zelta Embedded SDK provides production-ready firmware for IoT devices built on **Zephyr RTOS**. It handles device provisioning, secure MQTT communication, telemetry reporting, and OTA firmware updates, allowing you to focus on your application logic.
+The Zelta Embedded SDK provides a protocol implementation for connecting IoT devices to the Zelta cloud platform. It's **not limited to any specific RTOS** - the protocol is open and can be implemented on any platform.
+
+### Supported Platforms
+
+- ✅ **Zephyr RTOS** - Reference implementation provided
+- ✅ **Linux** (Yocto, Buildroot, Debian, etc.) - Full support
+- ✅ **FreeRTOS** - Port the reference implementation
+- ✅ **Bare Metal** - Implement the protocol directly
+- ✅ **Any platform with MQTT or HTTPS** - Protocol is platform-agnostic
 
 ### Key Features
 
-- 🔐 **Secure Device Provisioning** - Automated device registration with the Zelta platform
-- 📡 **MQTT Connectivity** - Bidirectional communication with TLS encryption
-- 📊 **Telemetry & Logging** - Real-time device metrics and event streaming
+- 🔐 **Secure Device Provisioning** - Register devices with the platform
+- 📡 **MQTT or HTTPS Communication** - Choose your transport protocol
+- 📊 **Telemetry Reporting** - Engine, fluids, battery, location, sensors, diagnostics
 - 🔄 **OTA Updates** - Remote firmware updates with rollback support
-- ⚡ **Low Power Mode** - Optimized for battery-powered devices
-- 🛡️ **Security First** - End-to-end encryption, certificate-based authentication
-- 📱 **Multi-Platform** - ESP32, nRF52, STM32, and more
+- ⚡ **Low Power Support** - Optimized for battery-powered devices
+- 🛡️ **Security** - TLS encryption, API key or certificate authentication
+- 📱 **Multi-Platform** - Works on any hardware that supports networking
 
 ## Architecture
 
-The SDK integrates with the Zelta cloud platform components:
+Zelta uses a **protocol-first approach**. Any device that can speak MQTT or HTTPS can integrate with the platform:
 
 ```
-┌─────────────────────┐
-│  Your Application   │
-├─────────────────────┤
-│  Zelta Embedded SDK │ ◄── This Repository (Open Source)
-└──────────┬──────────┘
-           │ MQTT/TLS
-           ▼
-┌─────────────────────┐
-│  Zelta MQTT Bridge  │
-├─────────────────────┤
-│  Zelta Cloud API    │ ◄── Closed Source
-├─────────────────────┤
-│  Zelta Web Dashboard│
-└─────────────────────┘
+┌─────────────────────────────────────────┐
+│     Your Device Application             │
+│  (Any OS: Zephyr, Linux, FreeRTOS, etc.)│
+├─────────────────────────────────────────┤
+│    Zelta Protocol Implementation        │ ◄── Open Protocol (MQTT + REST)
+│  (Reference: C for Zephyr, portable)    │
+└──────────────┬──────────────────────────┘
+               │ MQTT/TLS or HTTPS
+               ▼
+┌─────────────────────────────────────────┐
+│        MQTT Bridge (Mosquitto)          │
+│  Converts MQTT ↔ Supabase Functions     │
+├─────────────────────────────────────────┤
+│      Zelta Cloud Platform (SaaS)        │ ◄── Closed Source
+│  - Device Management                    │
+│  - OTA Update Orchestration             │
+│  - Telemetry Processing                 │
+│  - Web Dashboard                        │
+└─────────────────────────────────────────┘
 ```
 
-## Hardware Support
+### Protocol Overview
 
-Tested and verified on:
+The Zelta protocol is **simple and open**:
 
-- **ESP32** (ESP32-DevKitC, ESP32-WROVER)
-- **Nordic nRF52** (nRF52840 DK, nRF52833)
-- **STM32** (STM32F4, STM32L4 series)
-- **Custom boards** via Zephyr device tree
+1. **Device Authentication**: API key or TLS client certificates
+2. **Communication**: MQTT topics or HTTPS REST endpoints
+3. **Telemetry**: JSON payloads sent to specific topics/endpoints
+4. **OTA Updates**: Poll for updates, download chunks, verify, install
+5. **Commands**: Subscribe to command topics for remote control
 
-## Technology Stack
+You can implement this protocol in **any language** on **any platform**.
 
-- **RTOS**: [Zephyr RTOS](https://www.zephyrproject.org/) 3.x
-- **Build System**: CMake + West
-- **Protocol**: MQTT 3.1.1/5.0 with TLS 1.2/1.3
-- **Security**: mbedTLS, Hardware crypto acceleration
-- **Storage**: NVS (Non-Volatile Storage) for credentials and config
+## Implementation Options
+
+### Option 1: Reference C Library (Zephyr RTOS)
+
+Pre-built integration for Zephyr RTOS with full features:
+
+```c
+#include <zelta/device.h>
+#include <zelta/telemetry.h>
+
+void main(void) {
+    zelta_init();
+    zelta_connect();
+    
+    while (1) {
+        zelta_telemetry_report("temperature", 25.3);
+        zelta_process_messages();
+        k_sleep(K_SECONDS(60));
+    }
+}
+```
+
+### Option 2: Linux Integration (Yocto/Buildroot/Debian)
+
+Run as a systemd service on embedded Linux:
+
+```bash
+# Install dependencies
+apt-get install mosquitto-clients libmosquitto-dev libcurl4-openssl-dev
+
+# Build the agent
+git clone https://github.com/afmecofe/zelta.git
+cd zelta
+mkdir build && cd build
+cmake .. && make
+
+# Run as daemon
+systemd enable zelta-agent
+systemd start zelta-agent
+```
+
+### Option 3: Custom Implementation (Any Platform)
+
+Implement the protocol directly using our API documentation:
+
+```python
+# Python example
+import paho.mqtt.client as mqtt
+import json
+
+client = mqtt.Client()
+client.username_pw_set("device-id", "api-key")
+client.connect("mqtt.zeltasoft.com", 8883)
+
+# Send telemetry
+topic = f"zelta/{product_id}/{device_id}/up/telemetry/sensors"
+payload = json.dumps({"temperature": 25.3, "humidity": 60.0})
+client.publish(topic, payload, qos=1)
+```
+
+Works with: Python, Node.js, Go, Rust, Java, C#, Arduino, MicroPython, etc.
 
 ## Quick Start
 
-### Prerequisites
-
-- [Zephyr SDK](https://docs.zephyrproject.org/latest/develop/getting_started/index.html) installed
-- West build tool
-- Python 3.8+
-- A Zelta platform account (contact sales@zeltasoft.com)
-
-### Building Firmware
+### For Zephyr RTOS Users
 
 ```bash
 # Clone with parent repository
@@ -74,66 +137,61 @@ cd Zelta/embedded
 
 # Build for your target board
 west build -b esp32_devkitc_wrover samples/basic_telemetry
-
-# Flash to device
 west flash
 ```
 
-### Configuration
+### For Linux/Yocto Users
 
-Create a `prj.conf` file in your application:
+```bash
+# Add to your Yocto layer
+bitbake zelta-agent
 
-```ini
-# Zelta Configuration
-CONFIG_ZELTA_DEVICE_ID="your-device-id"
-CONFIG_ZELTA_MQTT_BROKER="mqtt.zeltasoft.com"
-CONFIG_ZELTA_MQTT_PORT=8883
-CONFIG_ZELTA_TLS_ENABLED=y
-
-# Enable features
-CONFIG_ZELTA_TELEMETRY=y
-CONFIG_ZELTA_OTA_UPDATES=y
-CONFIG_ZELTA_LOGGING=y
+# Or build manually
+git clone https://github.com/afmecofe/zelta.git
+cd zelta && mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make && sudo make install
 ```
 
-### Basic Usage
+### For Other Platforms
 
-```c
-#include <zelta/device.h>
-#include <zelta/telemetry.h>
+1. Read the [Protocol Documentation](https://github.com/afmecofe/zelta/wiki/Protocol-Reference)
+2. Implement MQTT client or HTTPS client
+3. Follow the [Integration Guide](https://github.com/afmecofe/zelta/wiki/Custom-Integration)
 
-void main(void) {
-    // Initialize Zelta SDK
-    zelta_init();
-    
-    // Provision device (first boot only)
-    zelta_provision();
-    
-    // Connect to platform
-    zelta_connect();
-    
-    while (1) {
-        // Send telemetry
-        zelta_telemetry_report("temperature", sensor_read_temp());
-        zelta_telemetry_report("battery", battery_level());
-        
-        // Check for commands/updates
-        zelta_process_messages();
-        
-        k_sleep(K_SECONDS(60));
-    }
-}
+## Protocol Documentation
+
+The Zelta protocol is **open and documented**. You don't need our SDK if you prefer to implement it yourself.
+
+### MQTT Topics
+
+```
+Device → Cloud:
+  zelta/{product_id}/{device_id}/up/status          - Status updates
+  zelta/{product_id}/{device_id}/up/heartbeat       - Keep-alive (every 60s)
+  zelta/{product_id}/{device_id}/up/check           - Check for firmware updates
+  zelta/{product_id}/{device_id}/up/telemetry/*     - Telemetry data
+
+Cloud → Device:
+  zelta/{product_id}/{device_id}/down/command       - Remote commands
+  zelta/{product_id}/{device_id}/down/response      - Command responses
+  zelta/{product_id}/{device_id}/down/firmware      - Firmware chunks
 ```
 
-## Samples
+### REST API Endpoints
 
-Explore ready-to-run examples:
+```
+POST https://api.zeltasoft.com/check-update
+  Body: {"device_id": "...", "current_version": "1.0.0"}
+  
+POST https://api.zeltasoft.com/report-telemetry
+  Body: {"device_id": "...", "type": "sensors", "data": {...}}
 
-- **basic_telemetry** - Simple sensor data reporting
-- **provisioning** - Device registration flow
-- **ota_update** - Firmware update with rollback
-- **low_power** - Battery-optimized operation
-- **sensor_hub** - Multi-sensor data aggregation
+POST https://api.zeltasoft.com/report-status
+  Body: {"device_id": "...", "status": "online", "version": "1.0.0"}
+```
+
+See [API Documentation](https://github.com/afmecofe/zelta/wiki/API-Reference) for complete details.
 
 ## Development
 

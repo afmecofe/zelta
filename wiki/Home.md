@@ -1,35 +1,41 @@
 # Zelta Embedded SDK Wiki
 
-Welcome to the Zelta Embedded SDK documentation! This wiki provides comprehensive guides for building IoT firmware with the Zelta platform.
+Welcome to the Zelta Embedded SDK documentation! This wiki provides comprehensive guides for integrating **any device** with the Zelta IoT platform.
+
+> **Platform Agnostic**: Zelta works with Zephyr RTOS, Linux (Yocto/Buildroot), FreeRTOS, bare metal, or any platform with MQTT/HTTPS support.
 
 ## 🚀 Getting Started
 
 - [Quick Start Guide](Quick-Start)
-- [Hardware Requirements](Hardware-Requirements)
-- [Installation](Installation)
-- [Your First Project](First-Project)
+- [Platform Support](Platform-Support)
+- [Protocol Overview](Protocol-Overview)
+- [Choose Your Integration Path](Integration-Paths)
 
-## 📡 Core Features
+## 📡 Protocol Reference
 
-- [Device Provisioning](Device-Provisioning)
-- [MQTT Communication](MQTT-Communication)
-- [Telemetry Reporting](Telemetry-Reporting)
-- [OTA Updates](OTA-Updates)
-- [Command Handling](Command-Handling)
+- [MQTT Topics](MQTT-Topics)
+- [REST API](REST-API)
+- [Message Formats](Message-Formats)
+- [Authentication](Authentication)
+- [TLS/Security](TLS-Security)
 
-## 🔧 Configuration
+## 🔧 Platform Integrations
 
-- [Kconfig Options](Kconfig-Options)
-- [Device Tree Configuration](Device-Tree)
-- [TLS/Security Setup](TLS-Security)
-- [Power Management](Power-Management)
+### Embedded RTOS
+- [Zephyr RTOS](Zephyr-Integration) - Reference implementation
+- [FreeRTOS](FreeRTOS-Integration) - Port guide
+- [Bare Metal](Bare-Metal-Integration) - Minimal implementation
 
-## 🛠️ Hardware Platforms
+### Embedded Linux
+- [Yocto Project](Yocto-Integration) - Build as package
+- [Buildroot](Buildroot-Integration) - Add to Buildroot
+- [Debian/Ubuntu](Linux-Integration) - Systemd service
 
-- [ESP32 Series](ESP32)
-- [Nordic nRF52/nRF53](Nordic-nRF)
-- [STM32 Series](STM32)
-- [Custom Boards](Custom-Boards)
+### Other Platforms
+- [Python/MicroPython](Python-Integration)
+- [Node.js/JavaScript](NodeJS-Integration)
+- [Arduino/ESP-IDF](Arduino-Integration)
+- [Custom Implementation](Custom-Integration)
 
 ## 📚 API Reference
 
