@@ -126,6 +126,9 @@ def handle_frame(frame):
 
 
 # ── Main loop (blocking read — works on all MicroPython versions) ──────────────
+import micropython
+micropython.kbd_intr(-1)   # Disable Ctrl+C so 0x03 (FC03) doesn't kill the script
+
 time.sleep_ms(500)   # let USB CDC settle after boot / soft-reset
 
 buf = bytearray()
