@@ -140,7 +140,7 @@ time.sleep_ms(500)   # let USB CDC settle after boot / soft-reset
 buf = bytearray()
 
 while True:
-    b = _vcp.read(1)
+    b = sys.stdin.buffer.read(1)   # blocking — waits until a byte arrives
     if not b:
         continue
 
