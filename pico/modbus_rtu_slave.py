@@ -132,16 +132,17 @@ def handle_frame(frame):
         return exception_response(addr, fc, 1)
 
 
-# ── Main loop (blocking read — works on all MicroPython versions) ──────────────
+# ── Main loop ─────────────────────────────────────────────────────────────────
 import micropython
 micropython.kbd_intr(-1)   # Disable Ctrl+C so 0x03 (FC03) doesn't kill the script
 
-time.sleep_ms(500)   # let USB CDC settle after boot / soft-reset
+time.sleep_ms(500)         # let USB CDC settle after boot / soft-reset
+_vcp.read(256)             # drain any buffered bytes (REPL banner etc.)
 
 buf = bytearray()
 
 while True:
-    b = _vcp.read(1)    # non-blocking; returns None or b'' when no data
+    b = _vcp.recv(1, timeout=10000)   # BLOCKING — waits up to 10s for a byte
     if not b:
         continue
 
