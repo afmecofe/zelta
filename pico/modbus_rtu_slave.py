@@ -13,6 +13,10 @@ Extension settings: Baud 9600 · Unit ID 1 · Start 0 · Count 10
 
 import sys
 import time
+import machine
+
+# Direct USB CDC writer — bypasses dupterm/text-mode processing
+_vcp = machine.USB_VCP()
 
 DEVICE_ADDR   = 1
 HOLDING_REGS  = [100 + i * 10 for i in range(64)]   # r/w
@@ -97,13 +101,15 @@ def handle_frame(frame):
     elif fc == 5:
         if 0 <= start < len(COILS):
             COILS[start] = 1 if frame[4] == 0xFF else 0
-        return bytes(frame)
+        # Echo request as response (built fresh to avoid dupterm byte corruption)
+        return append_crc(bytearray([addr, 0x05, frame[2], frame[3], frame[4], frame[5]]))
 
     elif fc == 6:
         v = (frame[4] << 8) | frame[5]
         if 0 <= start < len(HOLDING_REGS):
             HOLDING_REGS[start] = v
-        return bytes(frame)
+        # Echo request as response (built fresh to avoid dupterm byte corruption)
+        return append_crc(bytearray([addr, 0x06, frame[2], frame[3], frame[4], frame[5]]))
 
     elif fc == 0x0F:
         count      = (frame[4] << 8) | frame[5]
@@ -134,7 +140,7 @@ time.sleep_ms(500)   # let USB CDC settle after boot / soft-reset
 buf = bytearray()
 
 while True:
-    b = sys.stdin.buffer.read(1)
+    b = _vcp.read(1)
     if not b:
         continue
 
@@ -167,6 +173,6 @@ while True:
         buf  = buf[consumed:] if resp is not None else buf[1:]
 
         if resp is not None:
-            sys.stdout.buffer.write(resp)
+            _vcp.write(resp)
             sys.stdout.flush()
             break
