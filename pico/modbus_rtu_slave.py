@@ -12,12 +12,11 @@ Extension settings: Baud 9600 · Unit ID 1 · Start 0 · Count 10
 """
 
 import sys
-import uos
 import time
 import machine
+import micropython
 
 _vcp = machine.USB_VCP()
-uos.dupterm(None, 1)   # Detach REPL from USB CDC — pure binary pipe, no echo, no prompt
 
 DEVICE_ADDR   = 1
 HOLDING_REGS  = [100 + i * 10 for i in range(64)]   # r/w
@@ -176,5 +175,4 @@ while True:
 
         if resp is not None:
             _vcp.write(resp)
-            sys.stdout.flush()
             break
