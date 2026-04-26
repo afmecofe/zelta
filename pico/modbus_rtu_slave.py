@@ -12,11 +12,12 @@ Extension settings: Baud 9600 · Unit ID 1 · Start 0 · Count 10
 """
 
 import sys
+import uos
 import time
 import machine
 
-# Direct USB CDC writer — bypasses dupterm/text-mode processing
 _vcp = machine.USB_VCP()
+uos.dupterm(None, 1)   # Detach REPL from USB CDC — pure binary pipe, no echo, no prompt
 
 DEVICE_ADDR   = 1
 HOLDING_REGS  = [100 + i * 10 for i in range(64)]   # r/w
@@ -140,7 +141,7 @@ time.sleep_ms(500)   # let USB CDC settle after boot / soft-reset
 buf = bytearray()
 
 while True:
-    b = sys.stdin.buffer.read(1)   # blocking — waits until a byte arrives
+    b = _vcp.read(1)    # non-blocking; returns None or b'' when no data
     if not b:
         continue
 
