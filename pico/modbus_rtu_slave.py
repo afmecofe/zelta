@@ -130,15 +130,40 @@ def handle_frame(frame):
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 import micropython
-micropython.kbd_intr(-1)   # Disable Ctrl+C so 0x03 (FC03) doesn't kill the script
+import uos
 
-time.sleep_ms(500)         # let USB CDC settle after boot / soft-reset
-_vcp.read(256)             # drain any buffered bytes (REPL banner etc.)
+micropython.kbd_intr(-1)   # Disable Ctrl+C (0x03)
+
+# Detach the REPL from USB CDC so Ctrl+A (0x01 = Modbus addr 1) no longer
+# switches to raw REPL mode. uos.dupterm returns the raw USB CDC stream.
+try:
+    _usb = uos.dupterm(None, 1)   # slot 1 = USB CDC on Pico
+    if _usb is None:
+        _usb = uos.dupterm(None, 0)
+except Exception:
+    _usb = None
+
+time.sleep_ms(500)   # let USB CDC settle
+
+def _readbyte():
+    if _usb is not None:
+        while True:
+            b = _usb.read(1)
+            if b:
+                return b
+    else:
+        return sys.stdin.buffer.read(1)
+
+def _writeresp(data):
+    if _usb is not None:
+        _usb.write(data)
+    else:
+        sys.stdout.buffer.write(data)
 
 buf = bytearray()
 
 while True:
-    b = _vcp.recv(1, timeout=10000)   # BLOCKING — waits up to 10s for a byte
+    b = _readbyte()
     if not b:
         continue
 
@@ -171,5 +196,5 @@ while True:
         buf  = buf[consumed:] if resp is not None else buf[1:]
 
         if resp is not None:
-            sys.stdout.buffer.write(resp)
+            _writeresp(resp)
             break
